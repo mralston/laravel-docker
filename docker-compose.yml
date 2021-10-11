@@ -1,0 +1,82 @@
+version: '3'
+
+services:
+
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/nginx/Dockerfile
+    image: nginx
+    depends_on:
+      - php # PHP container must be started before NGINX
+    ports:
+      - 80:80
+    volumes:
+      - .:/site:cached
+
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/php.Dockerfile
+    image: php
+    depends_on:
+      - redis
+    volumes:
+      - .:/site:cached
+    env_file:
+      - docker/php/env
+    environment:
+      CONTAINER_ROLE: php
+
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/php.Dockerfile
+    image: php
+    depends_on:
+      - php
+      # NGINX needs to start before queue so that its IP can be resolved
+      # and added to /etc/hosts for PhantomJS
+      - nginx
+      - redis
+    restart: always
+    volumes:
+      - .:/site:cached
+    env_file:
+      - docker/php/env
+    environment:
+      CONTAINER_ROLE: queue
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/php/php.Dockerfile
+    image: php
+    depends_on:
+      - php # scheduler 'extends' php, so build php first
+      - redis
+    restart: always
+    volumes:
+      - .:/site:cached
+    env_file:
+      - docker/php/env
+    environment:
+      CONTAINER_ROLE: scheduler
+
+  redis:
+    image: redis:latest
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    restart: always
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - 8081:8081
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    restart: always
+    ports:
+      - 8025:1080
+      - 1080:1080

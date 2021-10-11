@@ -1,0 +1,18 @@
+# Overrides settings from project's .env file whilst running in Docker
+
+# Only put Docker specific stuff in here:
+#    No need to define standard app settings, they can stay in the normal .env file
+
+DB_HOST=host.docker.internal
+CACHE_DRIVER=redis
+SESSION_DRIVER=redis
+QUEUE_DRIVER=redis
+
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_DRIVER=smtp
+MAIL_HOST=mailcatcher
+MAIL_PORT=1025
+MAIL_ENCRYPTION=null
